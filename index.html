@@ -1,14 +1,141 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <style>
-            canvas { 
-              width: 100%; 
-              height: 100% 
-            }
-        </style>
-    </head>
-  <body>
-    <script type="module" src="main.js"></script>
-  </body>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Add 3D terrain to a map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiamVyZW15cmF2ZW4iLCJhIjoiY2tsaDV0c3hsNWJiczJwcGw0dG1pa2ZmeCJ9.FYCJqKayl9tWrBP9gwxVLQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        zoom: 17,
+        center: [174.840267,-36.916314],
+        pitch: 30,
+        bearing: 50,
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/jeremyraven/clbh3uzwd000v16o8ysz8qyhg'
+    });
+
+    // create the popup
+    const popup1 = new mapboxgl.Popup({ offset: 25 }).setText(
+        'ID1f-01 - Entry 1 Plyon, Double-Sided, Illuminated'
+    );
+
+    const popup2 = new mapboxgl.Popup({ offset: 25 }).setText(
+        'D1w-01 - Directional, Double-Sided, Non-Illuminated'
+    );
+
+    const popup3 = new mapboxgl.Popup({ offset: 25 }).setText(
+        'D1w-02 - Directional, Double-Sided, Non-Illuminated'
+    );
+
+    const popup4 = new mapboxgl.Popup({ offset: 25 }).setText(
+        'ID1f-02 - Identification Plyon, Double-Sided, Non-Illuminated'
+    );
+
+    // Create a default Marker and add it to the map.
+    const marker1 = new mapboxgl.Marker({
+        color: 'orange',
+        scale: 1.0
+    })
+        .setLngLat([174.839520,-36.916282])
+        .setPopup(popup1)
+        .addTo(map);
+        
+    const marker2 = new mapboxgl.Marker({
+        color: 'green',
+        scale: 1.0
+    })
+        .setLngLat([174.840247,-36.916316])
+        .setPopup(popup2)
+        .addTo(map);
+        
+    const marker3 = new mapboxgl.Marker({
+        color: 'green',
+        scale: 1.0
+    })
+        .setLngLat([174.840317,-36.917336])
+        .setPopup(popup3)
+        .addTo(map);
+        
+    const marker4 = new mapboxgl.Marker({
+        color: 'orange',
+        scale: 1.0
+    })
+        .setLngLat([174.840503,-36.918201])
+        .setPopup(popup4)
+        .addTo(map);       
+
+    map.on('style.load', () => {
+        map.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 512,
+            'maxzoom': 14
+        });
+        // add the DEM source as a terrain layer with exaggerated height
+        map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+    });
+
+    map.on('style.load', () => {
+// Insert the layer beneath any symbol layer.
+const layers = map.getStyle().layers;
+const labelLayerId = layers.find(
+    (layer) => layer.type === 'symbol' && layer.layout['text-field']
+    ).id;
+    
+    // The 'building' layer in the Mapbox Streets
+    // vector tileset contains building height data
+    // from OpenStreetMap.
+    map.addLayer(
+        {
+        'id': 'add-3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15,
+        'paint': {
+        'fill-extrusion-color': '#aaa',
+        
+        // Use an 'interpolate' expression to
+        // add a smooth transition effect to
+        // the buildings as the user zooms in.
+        'fill-extrusion-height': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        15,
+        0,
+        15.05,
+        ['get', 'height']
+        ],
+        'fill-extrusion-base': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        15,
+        0,
+        15.05,
+        ['get', 'min_height']
+        ],
+        'fill-extrusion-opacity': 0.6
+        }
+        },
+    labelLayerId
+    );
+});
+</script>
+
+</body>
 </html>
