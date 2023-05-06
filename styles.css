@@ -1,0 +1,37 @@
+body {
+    margin: 0;
+    background-color: black;
+}
+
+header {
+    color: lightgrey;
+    font-family: Arial, Helvetica, sans-serif;
+    padding-left: 20px;
+    padding-top: 20px;
+}
+
+footer {
+    color: lightgrey;
+    font-family: Arial, Helvetica, sans-serif;
+    padding-right: 20px;
+    text-align: right;
+}
+
+h1 {
+    margin: 0;
+    padding-bottom: 0px;
+}
+
+h3 {
+    margin: 0;
+    padding-bottom: 0px;
+    padding-top: 5px;
+}
+
+.logo {
+    float: right;
+    padding: 10px;
+    position: relative;
+    bottom: 70px;
+    right: 20px;
+}
