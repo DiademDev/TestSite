@@ -2,64 +2,155 @@
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Zjk5N2RlYS0zMGY2LTQxNWQtYjAwMy1iYWUyODI4ODY5YTUiLCJpZCI6MTE3OTUzLCJpYXQiOjE2NzA3Mzk4MTl9.k3I9be0G6cm7S9-U3lYsvSaUZ6mKVf0Capzojy3RZAU";
 
 const viewer = new Cesium.Viewer("cesiumContainer", {
-  timeline: false,
+  //timeline: false,
   animation: false,
-  terrainProvider: Cesium.createWorldTerrain(),
+  terrainProvider: Cesium.createWorldTerrain()
 });
 
-  viewer._cesiumWidget._creditContainer.style.display = "none";
+const osmBuildingsTileset = Cesium.createOsmBuildings();
+viewer.scene.primitives.add(osmBuildingsTileset);
+
+viewer._cesiumWidget._creditContainer.style.display = "none";
+
+
+osmBuildingsTileset.readyPromise.then(() => {
+  var entities = osmBuildingsTileset.entities;
+
+  var idsToRemove = [28898677, 157332769, 874500718, 330132975];
+
+  for (var i = 0; i < idsToRemove.length; i++) {
+    var entityToRemove = entities.getById(idsToRemove[i]);
+    entities.remove(entityToRemove);
+  }
+
+  osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+    color: {
+      conditions: [
+        // Show all buildings except the ones with these IDs
+        ["${id} !== '28898677' && ${id} !== '157332769' && ${id} !== '874500718' && ${id} !== '330132975'", "color('white')"],
+        // Hide the buildings with these IDs
+        ["true", "color('black', 0)"]
+      ]
+    }
+  });
+});
 
 (async () => {
   "use strict";
   try {
-    const resource = await Cesium.IonResource.fromAssetId(1681985);
+    const resource = await Cesium.IonResource.fromAssetId(1682454);
 
-    const position = Cesium.Cartesian3.fromDegrees(174.766129, -36.846297, 59.5);
-    const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-219.63, -0.06, -0.02));
+    const position = Cesium.Cartesian3.fromDegrees(174.766237, -36.846110, 55);
+    const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-120.45, -0.03, 0.05));
 
     const entity = viewer.entities.add({
       position: position,
       orientation: orientation,
       model: {
-        uri: resource,
-        scale: 14.0
+        uri: resource
+,
+        scale: 13.0
       },
     });
 
-
-    viewer.trackedEntity = entity;
-    //viewer.zoomTo(entity);
+    //viewer.trackedEntity = entity;
+    viewer.zoomTo(entity);
   } catch (error) {
     console.log(error);
   }
 })();
 
+// (async () => {
+//   "use strict";
+//   try {
+//     const resource = await Cesium.IonResource.fromAssetId(1681985);
 
-/* CODE SNIPPETS
+//     const position = Cesium.Cartesian3.fromDegrees(174.767107, -36.845250, 45);
+//     const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-120.45, -0.03, 0.05));
+
+//     const entity = viewer.entities.add({
+//       position: position,
+//       orientation: orientation,
+//       model: {
+//         uri: resource
+// ,
+//         scale: 13.0
+//       },
+//     });
+
+//     //viewer.trackedEntity = entity;
+//     viewer.zoomTo(entity);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// })();
 
 
--36.89072172745562, 174.85554813871818
+const scene = viewer.scene;
+scene.globe.enableLighting = true;
 
-viewer.scene.globe.enableLighting = true;
-viewer.scene.globe.ambientLightColor = new Cesium.Color(0, 0, 0);
+const scratchIcrfToFixed = new Cesium.Matrix3();
+const scratchMoonPosition = new Cesium.Cartesian3();
+const scratchMoonDirection = new Cesium.Cartesian3();
 
-var light = new Cesium.DirectionalLight();
-light.color = new Cesium.Color(1.0, 1.0, 1.0);
-light.intensity = 100.0;
-light.direction = new Cesium.Cartesian3(1.0, 0.0, 0.0);
-viewer.scene.globe.enableLighting = true;
-viewer.scene.addLight(light);
+function getMoonDirection(result) {
+  result = Cesium.defined(result) ? result : new Cesium.Cartesian3();
+  const icrfToFixed = scratchIcrfToFixed;
+  const date = viewer.clock.currentTime;
+  if (
+    !Cesium.defined(
+      Cesium.Transforms.computeIcrfToFixedMatrix(date, icrfToFixed)
+    )
+  ) {
+    Cesium.Transforms.computeTemeToPseudoFixedMatrix(date, icrfToFixed);
+  }
+  const moonPosition = Cesium.Simon1994PlanetaryPositions.computeMoonPositionInEarthInertialFrame(
+    date,
+    scratchMoonPosition
+  );
+  Cesium.Matrix3.multiplyByVector(
+    icrfToFixed,
+    moonPosition,
+    moonPosition
+  );
+  const moonDirection = Cesium.Cartesian3.normalize(
+    moonPosition,
+    scratchMoonDirection
+  );
+  return Cesium.Cartesian3.negate(moonDirection, result);
+}
 
-const ellipsoid = viewer.scene.globe.ellipsoid;
-const cartographicPosition = ellipsoid.cartesianToCartographic(position);
-const surfaceNormal = ellipsoid.geodeticSurfaceNormal(cartographicPosition);
-const angle = Cesium.Math.toRadians(180);
-const quaternion = Cesium.Quaternion.fromAxisAngle(surfaceNormal, angle);
-entity.orientation = quaternion;
 
-const origin = Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883);
-const normal = ellipsoid.geodeticSurfaceNormal(origin);
-const plane = Cesium.Plane.fromPointNormal(origin, normal);
 
-*/
+const moonLight = new Cesium.DirectionalLight({
+  direction: getMoonDirection(), // Updated every frame
+  color: new Cesium.Color(0.9, 0.925, 1.0),
+  intensity: 0.5,
+});
 
+const sunLight = new Cesium.SunLight();
+
+
+
+scene.preRender.addEventListener(function (scene, time) {
+  if (scene.light === moonLight) {
+    scene.light.direction = getMoonDirection(scene.light.direction);
+  }
+});
+
+function setTime(iso8601) {
+  const currentTime = Cesium.JulianDate.fromIso8601(iso8601);
+  const endTime = Cesium.JulianDate.addDays(
+    currentTime,
+    2,
+    new Cesium.JulianDate()
+  );
+
+  viewer.clock.currentTime = currentTime;
+  viewer.timeline.zoomTo(currentTime, endTime);
+}
+
+
+  scene.light = moonLight;
+  scene.globe.dynamicAtmosphereLightingFromSun = true;
+  setTime("2020-01-10T00:00:41.17946898164518643Z");
