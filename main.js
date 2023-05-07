@@ -102,7 +102,7 @@ function nightTimeLighting() {
   reset();
   scene.light = moonLight;
   scene.globe.dynamicAtmosphereLightingFromSun = true;
-  setTime("2020-01-10T05:29:41.17946898164518643Z");
+  setTime("2020-01-10T03:00:41.17946898164518643Z");
 }
 
 const scene = viewer.scene;
