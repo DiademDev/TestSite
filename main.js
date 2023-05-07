@@ -7,11 +7,10 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
   terrainProvider: Cesium.createWorldTerrain()
 });
 
-const osmBuildingsTileset = Cesium.createOsmBuildings();
-viewer.scene.primitives.add(osmBuildingsTileset);
-
 viewer._cesiumWidget._creditContainer.style.display = "none";
 
+const osmBuildingsTileset = Cesium.createOsmBuildings();
+viewer.scene.primitives.add(osmBuildingsTileset);
 
 osmBuildingsTileset.readyPromise.then(() => {
   var entities = osmBuildingsTileset.entities;
@@ -27,7 +26,7 @@ osmBuildingsTileset.readyPromise.then(() => {
     color: {
       conditions: [
         // Show all buildings except the ones with these IDs
-        ["${id} !== '28898677' && ${id} !== '157332769' && ${id} !== '874500718' && ${id} !== '330132975'", "color('white')"],
+        ["${id} !== '28898677' && ${id} !== '157332769' && ${id} !== '874500718' && ${id} !== '330132975'", "color('brown')"],
         // Hide the buildings with these IDs
         ["true", "color('black', 0)"]
       ]
@@ -40,7 +39,7 @@ osmBuildingsTileset.readyPromise.then(() => {
   try {
     const resource = await Cesium.IonResource.fromAssetId(1682454);
 
-    const position = Cesium.Cartesian3.fromDegrees(174.766237, -36.846110, 52);
+    const position = Cesium.Cartesian3.fromDegrees(174.766237, -36.846110, 55);
     const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-120.45, -0.03, 0.05));
 
     const entity = viewer.entities.add({
@@ -60,38 +59,49 @@ osmBuildingsTileset.readyPromise.then(() => {
   }
 })();
 
-// (async () => {
-//   "use strict";
-//   try {
-//     const resource = await Cesium.IonResource.fromAssetId(1681985);
+const DayButton = document.getElementById('DaylightBut');
+const NightButton = document.getElementById('NightBut');
 
-//     const position = Cesium.Cartesian3.fromDegrees(174.767107, -36.845250, 45);
-//     const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-120.45, -0.03, 0.05));
+DayButton.addEventListener('click', function() {
+  // This code will run when the button is clicked
+  dayTimeLighting();
+});
 
-//     const entity = viewer.entities.add({
-//       position: position,
-//       orientation: orientation,
-//       model: {
-//         uri: resource
-// ,
-//         scale: 13.0
-//       },
-//     });
+NightButton.addEventListener('click', function() {
+  // This code will run when the button is clicked
+  nightTimeLighting();
+});
 
-//     //viewer.trackedEntity = entity;
-//     viewer.zoomTo(entity);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// })();
+function dayTimeLighting() {
+  // Set scene defaults
+  scene.light = sunLight;
+  scene.globe.dynamicAtmosphereLighting = true;
+  scene.globe.dynamicAtmosphereLightingFromSun = false;
+  setTime("2020-01-09T23:00:39.018261982600961346Z");
+}
 
+function nightTimeLighting() {
+  reset();
+  scene.light = moonLight;
+  scene.globe.dynamicAtmosphereLightingFromSun = true;
+  setTime("2020-01-10T05:29:41.17946898164518643Z");
+}
 
 const scene = viewer.scene;
 scene.globe.enableLighting = true;
-
 const scratchIcrfToFixed = new Cesium.Matrix3();
 const scratchMoonPosition = new Cesium.Cartesian3();
 const scratchMoonDirection = new Cesium.Cartesian3();
+const sunLight = new Cesium.SunLight();
+const moonLight = new Cesium.DirectionalLight({
+  direction: getMoonDirection(), // Updated every frame
+  color: new Cesium.Color(0.9, 0.925, 1.0),
+  intensity: 0.5,
+});
+
+scene.light = moonLight;
+scene.globe.dynamicAtmosphereLightingFromSun = true;
+setTime("2020-01-10T03:00:41.17946898164518643Z");
 
 function getMoonDirection(result) {
   result = Cesium.defined(result) ? result : new Cesium.Cartesian3();
@@ -120,18 +130,6 @@ function getMoonDirection(result) {
   return Cesium.Cartesian3.negate(moonDirection, result);
 }
 
-
-
-const moonLight = new Cesium.DirectionalLight({
-  direction: getMoonDirection(), // Updated every frame
-  color: new Cesium.Color(0.9, 0.925, 1.0),
-  intensity: 0.5,
-});
-
-const sunLight = new Cesium.SunLight();
-
-
-
 scene.preRender.addEventListener(function (scene, time) {
   if (scene.light === moonLight) {
     scene.light.direction = getMoonDirection(scene.light.direction);
@@ -145,12 +143,19 @@ function setTime(iso8601) {
     2,
     new Cesium.JulianDate()
   );
-
   viewer.clock.currentTime = currentTime;
-  viewer.timeline.zoomTo(currentTime, endTime);
+viewer.timeline.zoomTo(currentTime, endTime);
+}
+
+function reset() {
+  // Set scene defaults
+  scene.light = sunLight;
+  scene.globe.dynamicAtmosphereLighting = true;
+  scene.globe.dynamicAtmosphereLightingFromSun = false;
+  setTime("2020-01-09T23:00:39.018261982600961346Z");
 }
 
 
-  scene.light = moonLight;
-  scene.globe.dynamicAtmosphereLightingFromSun = true;
-  setTime("2020-01-10T00:00:41.17946898164518643Z");
+
+
+
