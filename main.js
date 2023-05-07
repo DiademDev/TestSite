@@ -40,7 +40,7 @@ osmBuildingsTileset.readyPromise.then(() => {
   try {
     const resource = await Cesium.IonResource.fromAssetId(1682454);
 
-    const position = Cesium.Cartesian3.fromDegrees(174.766237, -36.846110, 55);
+    const position = Cesium.Cartesian3.fromDegrees(174.766237, -36.846110, 52);
     const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-120.45, -0.03, 0.05));
 
     const entity = viewer.entities.add({
