@@ -13,8 +13,22 @@ const osmBuildingsTileset = Cesium.createOsmBuildings();
 viewer.scene.primitives.add(osmBuildingsTileset);
 
 osmBuildingsTileset.readyPromise.then(() => {
+  // Wait for the tileset to be ready
+
+  if (!osmBuildingsTileset.ready) {
+    console.log('Tileset not ready yet.');
+    return;
+  }
+
   var entities = osmBuildingsTileset.entities;
 
+  if (!entities) {
+    console.log('No entities found.');
+    return;
+  }
+
+  console.log(entities);
+  
   var idsToRemove = [28898677, 157332769, 874500718, 330132975];
 
   for (var i = 0; i < idsToRemove.length; i++) {
@@ -22,17 +36,21 @@ osmBuildingsTileset.readyPromise.then(() => {
     entities.remove(entityToRemove);
   }
 
-  osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
-    color: {
-      conditions: [
-        // Show all buildings except the ones with these IDs
-        ["${id} !== '28898677' && ${id} !== '157332769' && ${id} !== '874500718' && ${id} !== '330132975'", "color('brown')"],
-        // Hide the buildings with these IDs
-        ["true", "color('black', 0)"]
-      ]
-    }
-  });
+  // osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+  //   color: {
+  //     conditions: [
+  //       // Show all buildings except the ones with these IDs
+  //       ["${id} !== '28898677' && ${id} !== '157332769' && ${id} !== '874500718' && ${id} !== '330132975'", "color('brown')"],
+  //       // Hide the buildings with these IDs
+  //       ["true", "color('black', 0)"]
+  //     ]
+  //   }
+  // });
+
+}).otherwise(function(error) {
+  console.log(error);
 });
+
 
 (async () => {
   "use strict";
@@ -130,12 +148,6 @@ function getMoonDirection(result) {
   return Cesium.Cartesian3.negate(moonDirection, result);
 }
 
-scene.preRender.addEventListener(function (scene, time) {
-  if (scene.light === moonLight) {
-    scene.light.direction = getMoonDirection(scene.light.direction);
-  }
-});
-
 function setTime(iso8601) {
   const currentTime = Cesium.JulianDate.fromIso8601(iso8601);
   const endTime = Cesium.JulianDate.addDays(
@@ -155,6 +167,11 @@ function reset() {
   setTime("2020-01-09T23:00:39.018261982600961346Z");
 }
 
+scene.preRender.addEventListener(function (scene, time) {
+  if (scene.light === moonLight) {
+    scene.light.direction = getMoonDirection(scene.light.direction);
+  }
+});
 
 
 
