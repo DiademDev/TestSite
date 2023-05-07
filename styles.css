@@ -42,7 +42,12 @@ button {
     border: none;
     width: 150px;
     height: 30px;
-    
+}
+
+button:hover {
+    background-color: rgb(91, 89, 89);
+    font-weight: bold;
+    color: lightgrey;
 }
 
 #DaylightBut {
