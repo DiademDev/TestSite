@@ -1,29 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Site</title>
-
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.83/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.83/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="styles.css">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Falling Rigid Body</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+  #canvas-container {
+    width: 100%;
+    height: 100vh;
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1>Geospatial Report</h1>
-        <h2>Test Site</h2>
-        <p>Site Location</p>
-        <img class="logo" src="img/Diadem_logo.jpg" width="100px" alt="Diadem logo">
-    </header>
+<div id="canvas-container"></div>
+<script>
+  // Initialize Matter.js
+  const Engine = Matter.Engine;
+  const Render = Matter.Render;
+  const World = Matter.World;
+  const Bodies = Matter.Bodies;
+  const Mouse = Matter.Mouse;
+  const MouseConstraint = Matter.MouseConstraint;
 
-    <div id="cesiumContainer" class="fullSize" sandbox="allow-scripts"></div>
-    <div id="loadingOverlay"><h1>Loading...</h1></div>
-    <button id="DaylightBut">Daylight</button>
-    <button id="NightBut">Night</button>
+  const engine = Engine.create();
 
-    <footer>
-    </footer>
+  // Create a renderer
+  const render = Render.create({
+    element: document.getElementById('canvas-container'),
+    engine: engine,
+    options: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      wireframes: false
+    }
+  });
 
-<script src="main.js"></script>
+  // Create a ground plane
+  const ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight - 20, window.innerWidth, 40, { isStatic: true });
+  World.add(engine.world, [ground]);
+
+  // Add mouse control
+  const mouse = Mouse.create(render.canvas);
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: {
+      stiffness: 0.2,
+      render: {
+        visible: false
+      }
+    }
+  });
+  World.add(engine.world, mouseConstraint);
+
+  // Start the engine
+  Engine.run(engine);
+
+  // Start the renderer
+  Render.run(render);
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    render.canvas.width = window.innerWidth;
+    render.canvas.height = window.innerHeight;
+    Render.lookAt(render, {
+      min: { x: 0, y: 0 },
+      max: { x: window.innerWidth, y: window.innerHeight }
+    });
+  });
+
+  // Handle mouse click
+  render.canvas.addEventListener('mousedown', (event) => {
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    const shapes = ['rectangle', 'circle']; // Add more shapes if desired
+    const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+
+    let randomBody;
+    if (randomShape === 'rectangle') {
+      const width = Math.random() * 50 + 30;
+      const height = Math.random() * 50 + 30;
+      randomBody = Bodies.rectangle(mouseX, mouseY, width, height, { restitution: 0.6, mass: width * height / 1000 });
+    } else if (randomShape === 'circle') {
+      const radius = Math.random() * 25 + 15;
+      randomBody = Bodies.circle(mouseX, mouseY, radius, { restitution: 0.6, mass: Math.PI * radius * radius / 1000 });
+    }
+
+    World.add(engine.world, [randomBody]);
+  });
+</script>
 </body>
 </html>
